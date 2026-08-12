@@ -295,6 +295,30 @@ PRODID:-//Shamba Steward//EN\r
     return {};
   }
 
+  // demo-fixture.ts
+  var SAMPLE_FIXTURE = {
+    events: [
+      {
+        "kind": "spray",
+        "crop": "beans",
+        "issue": "aphids",
+        "plot": "east",
+        "preHarvestDays": 7
+      },
+      {
+        "kind": "harvest",
+        "crop": "maize",
+        "plot": "north"
+      },
+      {
+        "kind": "sale",
+        "crop": "maize",
+        "quantity": 3,
+        "unit": "bags"
+      }
+    ]
+  };
+
   // main.ts
   var apiKeyInput = document.getElementById("api-key");
   var modelSelect = document.getElementById("model-select");
@@ -337,34 +361,49 @@ PRODID:-//Shamba Steward//EN\r
         break;
     }
   }
-  async function runAgent() {
+  async function runAgent(isDemoMode = false) {
     try {
-      const apiKey = apiKeyInput.value.trim();
-      const model = modelSelect.value;
-      const text = textField.value.trim();
-      if (!apiKey) {
-        alert("Please enter your Gemini API key");
-        apiKeyInput.focus();
-        return;
+      let events;
+      if (isDemoMode) {
+        events = SAMPLE_FIXTURE.events;
+        parseContent.innerHTML = "";
+        planContent.innerHTML = "";
+        verifyContent.innerHTML = "";
+        deliverContent.innerHTML = "";
+        agentStepper.classList.remove("hidden");
+        showStep("parse");
+        parseContent.innerHTML += '<div style="background-color: #1b1b1b; padding: 15px; border-left: 4px solid #FFC83C; margin: 15px 0;"><strong>Sample run (no live model call)</strong></div>';
+        parseContent.innerHTML += "<div><strong>Parsed Events:</strong></div><pre>" + JSON.stringify(events, null, 2) + "</pre>";
+      } else {
+        const apiKey = apiKeyInput.value.trim();
+        const model = modelSelect.value;
+        const text = textField.value.trim();
+        if (!apiKey) {
+          parseContent.innerHTML = '<div style="color:#FFC83C;"><strong>Please enter your Gemini API key to run the agent</strong></div>';
+          parseContent.innerHTML += '<div style="margin-top: 10px;">Or try the <button onclick="runAgent(true)" style="background-color: #FFC83C; color: #121212; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Try with sample (no key)</button> demo mode</div>';
+          agentStepper.classList.remove("hidden");
+          showStep("parse");
+          return;
+        }
+        if (!text) {
+          alert("Please enter field update text");
+          textField.focus();
+          return;
+        }
+        localStorage.setItem("gemini-api-key", apiKey);
+        parseContent.innerHTML = "";
+        planContent.innerHTML = "";
+        verifyContent.innerHTML = "";
+        deliverContent.innerHTML = "";
+        agentStepper.classList.remove("hidden");
+        showStep("parse");
+        const parsePrompt = buildParsePrompt(text);
+        parseContent.innerHTML += "<div><strong>Prompt:</strong> " + parsePrompt + "</div>";
+        const rawJson = await callGemini(apiKey, model, parsePrompt);
+        parseContent.innerHTML += "<div><strong>Raw JSON from Gemini:</strong> " + rawJson + "</div>";
+        events = parseGeminiJSON(rawJson).events;
+        parseContent.innerHTML += "<div><strong>Parsed Events:</strong></div><pre>" + JSON.stringify(events, null, 2) + "</pre>";
       }
-      if (!text) {
-        alert("Please enter field update text");
-        textField.focus();
-        return;
-      }
-      localStorage.setItem("gemini-api-key", apiKey);
-      parseContent.innerHTML = "";
-      planContent.innerHTML = "";
-      verifyContent.innerHTML = "";
-      deliverContent.innerHTML = "";
-      agentStepper.classList.remove("hidden");
-      showStep("parse");
-      const parsePrompt = buildParsePrompt(text);
-      parseContent.innerHTML += "<div><strong>Prompt:</strong> " + parsePrompt + "</div>";
-      const rawJson = await callGemini(apiKey, model, parsePrompt);
-      parseContent.innerHTML += "<div><strong>Raw JSON from Gemini:</strong> " + rawJson + "</div>";
-      const events = parseGeminiJSON(rawJson).events;
-      parseContent.innerHTML += "<div><strong>Parsed Events:</strong></div><pre>" + JSON.stringify(events, null, 2) + "</pre>";
       showStep("plan");
       const ctx = {
         today: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
