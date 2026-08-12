@@ -385,10 +385,10 @@
       action.textContent = r.nextAction;
       
       // Update recommendations
-      updateRecommendations(r);
+      updateRecommendations();
     }
 
-    function stressTest(type, pctOrAmount) {
+    function stressTest(type, pctOrAmount, evt) {
       var input = {
         income: parseFloat(el.income.value),
         expenses: parseFloat(el.expenses.value),
@@ -413,7 +413,7 @@
       buttons.forEach(btn => btn.classList.remove('active'));
       
       // Add active class to clicked button
-      event.target.classList.add('active');
+      (evt || window.event).target.classList.add('active');
       
       // Baseline
       document.getElementById('baselineRunway').textContent = fmtRunway(baseline.runwayMonths);
@@ -476,8 +476,8 @@
       }
     }
 
-    function updateRecommendations(resilience) {
-      var recommendations = Runway.recommend(resilience);
+    function updateRecommendations() {
+      var recommendations = Runway.recommend({income: parseFloat(el.income.value), expenses: parseFloat(el.expenses.value), savings: parseFloat(el.savings.value), buffer: parseFloat(el.buffer.value)});
       recommendationsList.innerHTML = '';
       
       if (recommendations.length === 0) {
@@ -496,6 +496,7 @@
       });
     }
 
+    window.stressTest = stressTest;
     ids.forEach(function (id) { el[id].addEventListener('input', render); });
     render();
   })();
