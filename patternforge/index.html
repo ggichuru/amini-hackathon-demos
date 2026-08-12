@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PatternForge — regex from examples</title>
+    <meta
+      name="description"
+      content="Paint the text you want (green) and don't want (red); PatternForge's verify-repair agent infers a regex, TESTS it against every example in the browser, and only shows one that passes — explained in plain English and exportable to JS, Python, Go, and grep. No login, no backend."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">⁂</span>
+        <div>
+          <h1>PatternForge</h1>
+          <p class="tagline">Highlight examples. Get a regex you can trust.</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button id="btn-sample" class="ghost">Load sample</button>
+        <button id="btn-share" class="primary">Copy share link</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- LEFT: the text you paint -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>1 · Paint your examples</h2>
+          <div class="paint-controls">
+            <button id="btn-green" class="paint green">Mark green ✓</button>
+            <button id="btn-red" class="paint red">Mark red ✕</button>
+            <button id="btn-clear" class="ghost">Clear</button>
+          </div>
+        </div>
+        <p class="hint">
+          Select any run of text below, then press <b>Mark green</b> for things the regex should match, or
+          <b>Mark red</b> for things it must <i>not</i>. Click a painted region to remove it.
+        </p>
+        <div id="canvas" class="canvas" spellcheck="false"></div>
+
+        <details class="editor">
+          <summary>Edit the source text</summary>
+          <textarea id="source" rows="5" spellcheck="false"></textarea>
+        </details>
+
+        <div class="stats">
+          <span class="stat"><b id="stat-green">0</b> green</span>
+          <span class="stat"><b id="stat-red">0</b> red</span>
+          <span class="stat"><b id="stat-matches">0</b> live matches</span>
+        </div>
+      </section>
+
+      <!-- RIGHT: the inferred regex + everything derived from it -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>2 · Your regex</h2>
+          <span id="strategy" class="strategy">paint some text green to begin</span>
+        </div>
+
+        <div class="regex-row">
+          <span class="delim">/</span>
+          <input id="regex" class="regex-input" spellcheck="false" placeholder="(synthesized pattern appears here)" />
+          <span class="delim">/g</span>
+          <button id="btn-copy-regex" class="ghost small">copy</button>
+        </div>
+        <div class="regex-meta">
+          <button id="btn-resynth" class="ghost small">↺ re-synthesize from examples</button>
+          <label class="chk"><input type="checkbox" id="flag-i" /> ignore case (i)</label>
+          <label class="chk"><input type="checkbox" id="flag-m" /> multiline (m)</label>
+        </div>
+        <div id="trust" class="trust"></div>
+        <div id="redos" class="redos"></div>
+        <!-- the verify-repair agent's act -> observe -> repair trace -->
+        <div id="agent" class="agent"></div>
+
+        <h3>Plain English</h3>
+        <p id="explain-summary" class="explain-summary"></p>
+        <ul id="explain-list" class="explain-list"></ul>
+
+        <h3>Export</h3>
+        <div class="tabs">
+          <button class="tab active" data-target="javascript">JavaScript</button>
+          <button class="tab" data-target="python">Python</button>
+          <button class="tab" data-target="go">Go</button>
+          <button class="tab" data-target="grep">grep</button>
+          <button id="btn-copy-code" class="ghost small copy-code">copy</button>
+        </div>
+        <p id="dialect-note" class="dialect-note"></p>
+        <pre id="export-code" class="export-code"></pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        100% client-side. Your text and highlights live only in this page's URL — the link <i>is</i> the save file.
+        A bounded <b>propose → test → repair</b> agent infers the pattern, verifies it against every example in your
+        browser, and refuses to show one that contradicts them. No API call.
+      </p>
+    </footer>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
