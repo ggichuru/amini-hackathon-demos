@@ -199,7 +199,8 @@
     var baseline = computeResilience(input);
     var recommendations = [];
     
-    // Cut expenses
+    // Ensure we always have at least 3 recommendations by including all valid actions
+    // Cut expenses - $200/mo
     var cutAmount = 200;
     var newInput = {
       income: input.income,
@@ -216,15 +217,32 @@
       });
     }
     
-    // Add to savings
-    var addToSavings = 1000;
+    // Cut expenses - $500/mo
+    var cutAmount2 = 500;
     var newInput2 = {
+      income: input.income,
+      expenses: input.expenses - cutAmount2,
+      savings: input.savings,
+      buffer: input.buffer
+    };
+    var cutResult2 = computeResilience(newInput2);
+    var cutDelta2 = cutResult2.runwayMonths - baseline.runwayMonths;
+    if (isFinite(cutDelta2) && cutDelta2 > 0) {
+      recommendations.push({
+        action: 'Cut $' + cutAmount2 + '/mo of expenses',
+        deltaMonths: cutDelta2
+      });
+    }
+    
+    // Add to savings - $1000
+    var addToSavings = 1000;
+    var newInput3 = {
       income: input.income,
       expenses: input.expenses,
       savings: input.savings + addToSavings,
       buffer: input.buffer
     };
-    var addToResult = computeResilience(newInput2);
+    var addToResult = computeResilience(newInput3);
     var addToDelta = addToResult.runwayMonths - baseline.runwayMonths;
     if (isFinite(addToDelta) && addToDelta > 0) {
       recommendations.push({
@@ -233,15 +251,32 @@
       });
     }
     
-    // Increase income
+    // Add one month of expenses to savings
+    var monthlyExpenses = input.expenses;
+    var newInput4 = {
+      income: input.income,
+      expenses: input.expenses,
+      savings: input.savings + monthlyExpenses,
+      buffer: input.buffer
+    };
+    var addToResult2 = computeResilience(newInput4);
+    var addToDelta2 = addToResult2.runwayMonths - baseline.runwayMonths;
+    if (isFinite(addToDelta2) && addToDelta2 > 0) {
+      recommendations.push({
+        action: 'Add one month of expenses to savings',
+        deltaMonths: addToDelta2
+      });
+    }
+    
+    // Increase income - $500/mo
     var increaseIncome = 500;
-    var newInput3 = {
+    var newInput5 = {
       income: input.income + increaseIncome,
       expenses: input.expenses,
       savings: input.savings,
       buffer: input.buffer
     };
-    var incResult = computeResilience(newInput3);
+    var incResult = computeResilience(newInput5);
     var incDelta = incResult.runwayMonths - baseline.runwayMonths;
     if (isFinite(incDelta) && incDelta > 0) {
       recommendations.push({
