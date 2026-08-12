@@ -82,6 +82,68 @@
   }
   .privacy .dot { color: var(--stable); font-size: 1.1rem; line-height: 1.2; }
   footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 24px; }
+  .stress-test-section {
+    margin-top: 16px;
+  }
+  .stress-test-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stress-test-button {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px;
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .stress-test-button:hover {
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+  }
+  .stress-test-result {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--field);
+    border-radius: 10px;
+    border: 1px solid var(--line);
+  }
+  .stress-test-result-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .stress-test-result-row:last-child {
+    margin-bottom: 0;
+  }
+  .stress-test-result-cell {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+  }
+  .stress-test-result-header {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .how-to-extend-section {
+    margin-top: 16px;
+  }
+  .recommendation-item {
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--field);
+    margin-bottom: 8px;
+    border: 1px solid var(--line);
+  }
+  .recommendation-action {
+    font-weight: bold;
+  }
+  .recommendation-delta {
+    color: var(--stable);
+  }
 </style>
 </head>
 <body>
@@ -159,6 +221,49 @@
     </details>
   </section>
 
+  <!-- Stress test section -->
+  <section class="card stress-test-section">
+    <h2>Stress test</h2>
+    <p>How would your runway be affected by various financial shocks?</p>
+    <div class="stress-test-buttons">
+      <button class="stress-test-button" onclick="stressTest('incomeToZero')">Lose your main income</button>
+      <button class="stress-test-button" onclick="stressTest('incomeLoss', 30)">Income drops 30%</button>
+      <button class="stress-test-button" onclick="stressTest('oneOff', 2000)">Emergency $2,000</button>
+      <button class="stress-test-button" onclick="stressTest('expenseRise', 20)">Recession combo</button>
+    </div>
+    <div id="stressTestResult" class="stress-test-result" style="display: none;">
+      <div class="stress-test-result-row">
+        <div class="stress-test-result-cell">
+          <div class="stress-test-result-header">Baseline</div>
+          <div id="baselineRunway">—</div>
+          <div id="baselineDate">—</div>
+        </div>
+        <div class="stress-test-result-cell">
+          <div class="stress-test-result-header">After Shock</div>
+          <div id="shockedRunway">—</div>
+          <div id="shockedDate">—</div>
+        </div>
+      </div>
+      <div class="stress-test-result-row">
+        <div class="stress-test-result-cell">
+          <div class="stress-test-result-header">Months Lost</div>
+          <div id="monthsLost">—</div>
+        </div>
+        <div class="stress-test-result-cell">
+          <div class="stress-test-result-header">Impact</div>
+          <div id="impactStatus">—</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How to extend section -->
+  <section class="card how-to-extend-section">
+    <h2>How to extend your runway</h2>
+    <p>Top 3 quantified actions to boost your financial resilience:</p>
+    <div id="recommendationsList"></div>
+  </section>
+
   <section class="card">
     <div class="privacy">
       <span class="dot" aria-hidden="true">●</span>
@@ -186,6 +291,8 @@
     var traj = document.getElementById('traj');
     var explain = document.getElementById('explain');
     var action = document.getElementById('action');
+    var stressTestResult = document.getElementById('stressTestResult');
+    var recommendationsList = document.getElementById('recommendationsList');
 
     function fmtDate(ymd) {
       var d = new Date(ymd + 'T00:00:00Z');
@@ -229,6 +336,92 @@
 
       explain.textContent = r.explanation;
       action.textContent = r.nextAction;
+      
+      // Update recommendations
+      updateRecommendations(r);
+    }
+
+    function stressTest(type, pctOrAmount) {
+      var input = {
+        income: parseFloat(el.income.value),
+        expenses: parseFloat(el.expenses.value),
+        savings: parseFloat(el.savings.value),
+        buffer: parseFloat(el.buffer.value)
+      };
+      
+      var shock = { type: type };
+      if (type === 'incomeLoss') shock.pct = pctOrAmount;
+      if (type === 'oneOff') shock.amount = pctOrAmount;
+      if (type === 'expenseRise') shock.pct = pctOrAmount;
+      
+      var result = Runway.simulate(input, [shock]);
+      var baseline = result.baseline;
+      var scenario = result.scenarios[0];
+      
+      // Display results
+      stressTestResult.style.display = 'block';
+      
+      // Baseline
+      document.getElementById('baselineRunway').textContent = fmtRunway(baseline.runwayMonths);
+      if (baseline.zeroDate) {
+        document.getElementById('baselineDate').textContent = fmtDate(baseline.zeroDate);
+      } else {
+        document.getElementById('baselineDate').textContent = isFinite(baseline.runwayMonths) ? '—' : 'Indefinitely';
+      }
+      
+      // Shocked
+      document.getElementById('shockedRunway').textContent = fmtRunway(scenario.result.runwayMonths);
+      if (scenario.result.zeroDate) {
+        document.getElementById('shockedDate').textContent = fmtDate(scenario.result.zeroDate);
+      } else {
+        document.getElementById('shockedDate').textContent = isFinite(scenario.result.runwayMonths) ? '—' : 'Indefinitely';
+      }
+      
+      // Months lost
+      var monthsLost = scenario.monthsLost;
+      if (isFinite(monthsLost)) {
+        document.getElementById('monthsLost').textContent = monthsLost.toFixed(1) + ' months';
+      } else {
+        document.getElementById('monthsLost').textContent = '∞ months';
+      }
+      
+      // Impact status
+      var impactStatus = document.getElementById('impactStatus');
+      if (isFinite(monthsLost) && monthsLost > 0) {
+        if (monthsLost < 3) {
+          impactStatus.textContent = 'Minor impact';
+          impactStatus.style.color = '#2f8f4e'; // stable
+        } else if (monthsLost < 12) {
+          impactStatus.textContent = 'Significant impact';
+          impactStatus.style.color = '#c9791b'; // fragile
+        } else {
+          impactStatus.textContent = 'Critical impact';
+          impactStatus.style.color = '#d6412b'; // critical
+        }
+      } else {
+        impactStatus.textContent = 'No impact';
+        impactStatus.style.color = '#2f8f4e'; // stable
+      }
+    }
+
+    function updateRecommendations(resilience) {
+      var recommendations = Runway.recommend(resilience);
+      recommendationsList.innerHTML = '';
+      
+      if (recommendations.length === 0) {
+        recommendationsList.innerHTML = '<p>No recommendations available.</p>';
+        return;
+      }
+      
+      recommendations.forEach(function(rec) {
+        var div = document.createElement('div');
+        div.className = 'recommendation-item';
+        div.innerHTML = `
+          <div class="recommendation-action">${rec.action}</div>
+          <div class="recommendation-delta">+${rec.deltaMonths.toFixed(1)} months</div>
+        `;
+        recommendationsList.appendChild(div);
+      });
     }
 
     ids.forEach(function (id) { el[id].addEventListener('input', render); });
