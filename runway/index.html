@@ -268,10 +268,10 @@
     <h2>Stress test</h2>
     <p>How would your runway be affected by various financial shocks?</p>
     <div class="stress-test-buttons">
-      <button class="stress-test-button" onclick="stressTest('incomeToZero', null, event)">Lose your main income</button>
-      <button class="stress-test-button" onclick="stressTest('incomeLoss', 30, event)">Income drops 30%</button>
+      <button class="stress-test-button" onclick="stressTest('expenseRise', 25, event)">Rent jumps 25%</button>
+      <button class="stress-test-button" onclick="stressTest('oneOff', 5000, event)">Medical bill $5,000</button>
       <button class="stress-test-button" onclick="stressTest('oneOff', 2000, event)">Emergency $2,000</button>
-      <button class="stress-test-button" onclick="stressTest('expenseRise', 20, event)">Recession combo</button>
+      <button class="stress-test-button" onclick="stressTest('expenseRise', 40, event)">Costs rise 40%</button>
     </div>
     <div id="stressTestResult" class="stress-test-result" style="display: none;">
       <div class="stress-test-result-row">
