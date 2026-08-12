@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GreenHour — the greenest hour to run your appliance</title>
+  <meta name="description" content="Find the greenest hour in the next 48h to run a flexible load, using the free National Grid ESO Carbon Intensity API. Every number traces to a real government data point.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <h1>Green<span>Hour</span></h1>
+      <p class="tag">The greenest hour in the next 48&nbsp;hours to run your dishwasher, laundry or EV charge — and a verifiable ledger of the CO<sub>2</sub> you've avoided.</p>
+      <p class="src-badge">Live data: <a href="https://carbonintensity.org.uk/" target="_blank" rel="noopener">National Grid ESO Carbon Intensity API</a> · free · no key · government-published · <b>GB pilot</b>, method ports to any grid</p>
+      <p class="disclosure">Estimate, not a precise claim: the API reports <b>average</b> grid intensity, not <b>marginal</b>, so the real emissions avoided by one extra load will differ. Savings are measured against a named baseline — <b>your usual run time</b> (editable below).</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Controls -->
+    <section class="card controls" aria-label="Settings">
+      <div class="ctrl">
+        <label for="postcode">Postcode <span class="hint">(outward code — regional forecast)</span></label>
+        <input id="postcode" type="text" inputmode="text" autocomplete="postal-code"
+               placeholder="e.g. RG10 — leave blank for national" maxlength="8">
+        <small class="muted">Using <b id="outcodeEcho">national grid average</b></small>
+      </div>
+      <div class="ctrl">
+        <label for="load">Flexible load</label>
+        <select id="load"></select>
+      </div>
+      <div class="ctrl narrow">
+        <label for="power">Power (kW)</label>
+        <input id="power" type="number" min="0.1" step="0.1" value="1.0">
+      </div>
+      <div class="ctrl narrow">
+        <label for="duration">Duration (h)</label>
+        <input id="duration" type="number" min="0.5" step="0.5" value="1.5">
+      </div>
+      <div class="ctrl narrow">
+        <label for="habit">Your usual time <span class="hint">(savings baseline)</span></label>
+        <input id="habit" type="time" value="18:00">
+      </div>
+      <div class="ctrl action">
+        <button id="fetchBtn" class="primary" type="button">Find greenest hour</button>
+      </div>
+    </section>
+
+    <!-- Recommendation -->
+    <section id="result" class="card result" aria-live="polite">
+      <p class="muted">Loading…</p>
+    </section>
+
+    <!-- 48h chart -->
+    <section class="card">
+      <div class="chart-head">
+        <h3>Next 48 hours · carbon intensity</h3>
+        <div class="legend">
+          <span><i style="background:#16a34a"></i>very low</span>
+          <span><i style="background:#65a30d"></i>low</span>
+          <span><i style="background:#ca8a04"></i>moderate</span>
+          <span><i style="background:#ea580c"></i>high</span>
+          <span><i style="background:#dc2626"></i>very high</span>
+          <span class="win"><i class="box gold"></i>greenest</span>
+          <span class="win"><i class="box blue"></i>your usual time</span>
+        </div>
+      </div>
+      <div id="chart" class="chart"></div>
+    </section>
+
+    <!-- Verification -->
+    <details class="card">
+      <summary><h3 style="display:inline">Show the working — every data point a judge can open</h3></summary>
+      <div id="verifyBox" class="verify-box"></div>
+    </details>
+
+    <!-- Ledger -->
+    <section class="card ledger">
+      <div class="ledger-head">
+        <div>
+          <h3>Avoided-CO<sub>2</sub> ledger</h3>
+          <p class="muted tiny"><span id="ledgerCount">0 runs logged</span> · stored locally in your browser</p>
+        </div>
+        <div class="ledger-total">
+          <span class="lbl">Total avoided</span>
+          <span id="ledgerTotal" class="big-num">0 g</span>
+        </div>
+      </div>
+      <p id="ledgerProjection" class="muted tiny projection"></p>
+      <div class="ledger-actions">
+        <button id="logBtn" class="primary" type="button" disabled>I ran it — bank the saving</button>
+        <button id="resetBtn" class="ghost" type="button">Reset ledger</button>
+      </div>
+      <div id="ledgerList" class="ledger-list"></div>
+    </section>
+
+    <footer class="foot">
+      <p>Data © <a href="https://www.nationalgrideso.com/" target="_blank" rel="noopener">National Grid ESO</a>,
+         Carbon Intensity API (Open Government Licence). GreenHour is a static page — no server, no tracking,
+         no dependencies. <a href="methodology.md" target="_blank" rel="noopener">Methodology</a> ·
+         <a href="README.md" target="_blank" rel="noopener">README</a></p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
