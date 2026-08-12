@@ -134,7 +134,138 @@
     };
   }
 
-  var api = { computeResilience: computeResilience, roundRunway: roundRunway };
+  function applyShock(input, shock) {
+    var o = (input && typeof input === 'object') ? input : {};
+    var income   = num(o.income);
+    var expenses = num(o.expenses);
+    var savings  = num(o.savings);
+    var buffer   = num(o.buffer);
+    
+    switch (shock.type) {
+      case 'incomeLoss':
+        income = income * (1 - shock.pct / 100);
+        break;
+      case 'incomeToZero':
+        income = 0;
+        break;
+      case 'expenseRise':
+        expenses = expenses * (1 + shock.pct / 100);
+        break;
+      case 'oneOff':
+        savings = savings - shock.amount;
+        break;
+      default:
+        // No shock applied
+    }
+    
+    return {
+      income: income,
+      expenses: expenses,
+      savings: savings,
+      buffer: buffer
+    };
+  }
+
+  function simulate(input, shocks) {
+    var baseline = computeResilience(input);
+    
+    var scenarios = [];
+    for (var i = 0; i < shocks.length; i++) {
+      var shock = shocks[i];
+      var shockedInput = applyShock(input, shock);
+      var result = computeResilience(shockedInput);
+      
+      var monthsLost = baseline.runwayMonths - result.runwayMonths;
+      // Handle infinity case safely
+      if (!isFinite(baseline.runwayMonths) || !isFinite(result.runwayMonths)) {
+        monthsLost = Infinity;
+      }
+      
+      scenarios.push({
+        shock: shock,
+        label: shock.label || shock.type,
+        result: result,
+        monthsLost: monthsLost
+      });
+    }
+    
+    return {
+      baseline: baseline,
+      scenarios: scenarios
+    };
+  }
+
+  function recommend(input) {
+    var baseline = computeResilience(input);
+    var recommendations = [];
+    
+    // Cut expenses
+    var cutAmount = 200;
+    var newInput = {
+      income: input.income,
+      expenses: input.expenses - cutAmount,
+      savings: input.savings,
+      buffer: input.buffer
+    };
+    var cutResult = computeResilience(newInput);
+    var cutDelta = cutResult.runwayMonths - baseline.runwayMonths;
+    if (isFinite(cutDelta) && cutDelta > 0) {
+      recommendations.push({
+        action: 'Cut $' + cutAmount + '/mo of expenses',
+        deltaMonths: cutDelta
+      });
+    }
+    
+    // Add to savings
+    var addToSavings = 1000;
+    var newInput2 = {
+      income: input.income,
+      expenses: input.expenses,
+      savings: input.savings + addToSavings,
+      buffer: input.buffer
+    };
+    var addToResult = computeResilience(newInput2);
+    var addToDelta = addToResult.runwayMonths - baseline.runwayMonths;
+    if (isFinite(addToDelta) && addToDelta > 0) {
+      recommendations.push({
+        action: 'Add $' + addToSavings + ' to savings',
+        deltaMonths: addToDelta
+      });
+    }
+    
+    // Increase income
+    var increaseIncome = 500;
+    var newInput3 = {
+      income: input.income + increaseIncome,
+      expenses: input.expenses,
+      savings: input.savings,
+      buffer: input.buffer
+    };
+    var incResult = computeResilience(newInput3);
+    var incDelta = incResult.runwayMonths - baseline.runwayMonths;
+    if (isFinite(incDelta) && incDelta > 0) {
+      recommendations.push({
+        action: 'Increase income by $' + increaseIncome + '/mo',
+        deltaMonths: incDelta
+      });
+    }
+    
+    // Sort by deltaMonths descending
+    recommendations.sort(function(a, b) {
+      return b.deltaMonths - a.deltaMonths;
+    });
+    
+    // Return top 3
+    return recommendations.slice(0, 3);
+  }
+
+  var api = { 
+    computeResilience: computeResilience, 
+    roundRunway: roundRunway,
+    applyShock: applyShock,
+    simulate: simulate,
+    recommend: recommend
+  };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.Runway = api;
