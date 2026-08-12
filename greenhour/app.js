@@ -294,10 +294,10 @@
     var url, source;
     if (outcode) {
       source = 'regional';
-      url = API_BASE + '/regional/intensity/' + encodeURIComponent(from) + '/fw48h/postcode/' + outcode;
+      url = API_BASE + '/regional/intensity/' + from + '/fw48h/postcode/' + outcode;
     } else {
       source = 'national';
-      url = API_BASE + '/intensity/' + encodeURIComponent(from) + '/fw48h';
+      url = API_BASE + '/intensity/' + from + '/fw48h';
     }
     return fetch(url, { headers: { 'Accept': 'application/json' } })
       .then(function (r) {
