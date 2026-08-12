@@ -7,15 +7,15 @@
 <style>
   :root {
     color-scheme: light dark;
-    --bg: #f6f7f9; --card: #ffffff; --ink: #10131a; --muted: #5b6472;
-    --line: #e3e6ec; --accent: #2f6df6; --field: #ffffff;
+    --bg: #F7F5F1; --card: #ffffff; --ink: #0B1F3A; --muted: #5b6472;
+    --line: #e3e6ec; --accent: #FFA500; --field: #ffffff;
     --critical: #d6412b; --fragile: #c9791b; --stable: #2f8f4e; --resilient: #1f7a5a;
     --shadow: 0 1px 2px rgba(16,19,26,.06), 0 8px 24px rgba(16,19,26,.06);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0d1117; --card: #161b22; --ink: #e8ecf3; --muted: #9aa4b2;
-      --line: #262d38; --accent: #5b8bff; --field: #0f141b;
+      --bg: #0B1F3A; --card: #161b22; --ink: #F7F5F1; --muted: #9aa4b2;
+      --line: #262d38; --accent: #FFA500; --field: #0f141b;
       --critical: #ff6b57; --fragile: #f0a53a; --stable: #4bd07f; --resilient: #34d6a8;
       --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
     }
@@ -46,12 +46,13 @@
     width: 100%; padding: 12px 12px 12px 26px; font-size: 1rem;
     background: var(--field); color: var(--ink);
     border: 1px solid var(--line); border-radius: 10px; -moz-appearance: textfield;
+    font-variant-numeric: tabular-nums;
   }
   input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
   .hero { text-align: center; padding: 28px 20px; }
-  .hero .eyebrow { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 8px; }
-  .hero .date { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; margin: 0; line-height: 1.15; }
-  .hero .runway { color: var(--muted); margin: 10px 0 0; font-size: 1rem; }
+  .hero .eyebrow { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 8px; font-weight: 500; }
+  .hero .date { font-size: 2.5rem; font-weight: 800; letter-spacing: -.02em; margin: 0; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .hero .runway { color: var(--muted); margin: 10px 0 0; font-size: 1.1rem; font-weight: 500; }
   .bandrow { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
   .pill { font-weight: 700; padding: 4px 12px; border-radius: 999px; font-size: .85rem; color: #fff; }
   .pill.Critical { background: var(--critical); }
@@ -100,9 +101,16 @@
     border-radius: 10px;
     cursor: pointer;
     text-align: center;
+    transition: all 0.2s ease;
   }
   .stress-test-button:hover {
     background: color-mix(in srgb, var(--accent) 5%, transparent);
+    border-color: var(--accent);
+  }
+  .stress-test-button.active {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
   }
   .stress-test-result {
     margin-top: 16px;
@@ -110,6 +118,7 @@
     background: var(--field);
     border-radius: 10px;
     border: 1px solid var(--line);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   }
   .stress-test-result-row {
     display: flex;
@@ -127,22 +136,55 @@
   .stress-test-result-header {
     font-weight: bold;
     margin-bottom: 4px;
+    font-size: 0.9rem;
+  }
+  .stress-test-result-value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
   }
   .how-to-extend-section {
     margin-top: 16px;
   }
   .recommendation-item {
-    padding: 12px;
+    padding: 16px;
     border-radius: 10px;
     background: var(--field);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     border: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   .recommendation-action {
-    font-weight: bold;
+    font-weight: 500;
+    flex: 1;
   }
   .recommendation-delta {
     color: var(--stable);
+    font-weight: 700;
+    background: color-mix(in srgb, var(--stable) 10%, transparent);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .stress-test-result-header {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+  }
+  .stress-test-result-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .stress-test-result-cell .value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .stress-test-result-cell .label {
+    font-size: 0.8rem;
+    color: var(--muted);
   }
 </style>
 </head>
@@ -226,32 +268,37 @@
     <h2>Stress test</h2>
     <p>How would your runway be affected by various financial shocks?</p>
     <div class="stress-test-buttons">
-      <button class="stress-test-button" onclick="stressTest('incomeToZero')">Lose your main income</button>
-      <button class="stress-test-button" onclick="stressTest('incomeLoss', 30)">Income drops 30%</button>
-      <button class="stress-test-button" onclick="stressTest('oneOff', 2000)">Emergency $2,000</button>
-      <button class="stress-test-button" onclick="stressTest('expenseRise', 20)">Recession combo</button>
+      <button class="stress-test-button" onclick="stressTest('incomeToZero', null, event)">Lose your main income</button>
+      <button class="stress-test-button" onclick="stressTest('incomeLoss', 30, event)">Income drops 30%</button>
+      <button class="stress-test-button" onclick="stressTest('oneOff', 2000, event)">Emergency $2,000</button>
+      <button class="stress-test-button" onclick="stressTest('expenseRise', 20, event)">Recession combo</button>
     </div>
     <div id="stressTestResult" class="stress-test-result" style="display: none;">
       <div class="stress-test-result-row">
         <div class="stress-test-result-cell">
           <div class="stress-test-result-header">Baseline</div>
-          <div id="baselineRunway">—</div>
-          <div id="baselineDate">—</div>
+          <div class="stress-test-result-cell">
+            <div class="value" id="baselineRunway">—</div>
+            <div class="label" id="baselineDate">—</div>
+          </div>
         </div>
         <div class="stress-test-result-cell">
           <div class="stress-test-result-header">After Shock</div>
-          <div id="shockedRunway">—</div>
-          <div id="shockedDate">—</div>
+          <div class="stress-test-result-cell">
+            <div class="value" id="shockedRunway">—</div>
+            <div class="label" id="shockedDate">—</div>
+          </div>
         </div>
       </div>
       <div class="stress-test-result-row">
         <div class="stress-test-result-cell">
           <div class="stress-test-result-header">Months Lost</div>
-          <div id="monthsLost">—</div>
+          <div class="value" id="monthsLost">—</div>
         </div>
         <div class="stress-test-result-cell">
           <div class="stress-test-result-header">Impact</div>
           <div id="impactStatus">—</div>
+          <div class="pill" id="impactBand" style="margin-top: 4px;">—</div>
         </div>
       </div>
     </div>
@@ -361,6 +408,13 @@
       // Display results
       stressTestResult.style.display = 'block';
       
+      // Remove active class from all buttons
+      var buttons = document.querySelectorAll('.stress-test-button');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      
+      // Add active class to clicked button
+      event.target.classList.add('active');
+      
       // Baseline
       document.getElementById('baselineRunway').textContent = fmtRunway(baseline.runwayMonths);
       if (baseline.zeroDate) {
@@ -401,6 +455,24 @@
       } else {
         impactStatus.textContent = 'No impact';
         impactStatus.style.color = '#2f8f4e'; // stable
+      }
+      
+      // Set impact band pill
+      var impactPill = document.getElementById('impactBand');
+      if (isFinite(monthsLost) && monthsLost > 0) {
+        if (monthsLost < 3) {
+          impactPill.textContent = 'Minor';
+          impactPill.className = 'pill Stable';
+        } else if (monthsLost < 12) {
+          impactPill.textContent = 'Significant';
+          impactPill.className = 'pill Fragile';
+        } else {
+          impactPill.textContent = 'Critical';
+          impactPill.className = 'pill Critical';
+        }
+      } else {
+        impactPill.textContent = 'None';
+        impactPill.className = 'pill Stable';
       }
     }
 
