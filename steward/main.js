@@ -37,6 +37,7 @@ Return only valid JSON, nothing else.`;
 
   // gemini.ts
   async function callGemini(apiKey, model, prompt) {
+    var _a, _b, _c, _d, _e;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
       method: "POST",
@@ -55,11 +56,12 @@ Return only valid JSON, nothing else.`;
       throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
     }
     const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return ((_e = (_d = (_c = (_b = (_a = data.candidates) == null ? void 0 : _a[0]) == null ? void 0 : _b.content) == null ? void 0 : _c.parts) == null ? void 0 : _d[0]) == null ? void 0 : _e.text) || "";
   }
 
   // plan.ts
   function planActions(events, ctx) {
+    var _a;
     const sortedEvents = [...events].sort((a, b) => {
       const kindOrder = { plant: 1, spray: 2, harvest: 3, sale: 4 };
       if (kindOrder[a.kind] !== kindOrder[b.kind]) {
@@ -90,7 +92,7 @@ Return only valid JSON, nothing else.`;
         if (event.crop && cropHarvestDates[event.crop]) {
           const harvestDate = new Date(cropHarvestDates[event.crop]);
           const sprayDate = new Date(harvestDate);
-          const preHarvestDays = event.preHarvestDays ?? 7;
+          const preHarvestDays = (_a = event.preHarvestDays) != null ? _a : 7;
           sprayDate.setDate(harvestDate.getDate() - preHarvestDays);
           let adjustedSprayDate = formatDate(sprayDate);
           while (ctx.rainDays.includes(adjustedSprayDate)) {
@@ -195,6 +197,7 @@ Return only valid JSON, nothing else.`;
 
   // verify.ts
   function verifyPlan(plan, ctx) {
+    var _a;
     const violations = [];
     const todayDate = new Date(ctx.today);
     if (ctx.windowStart && ctx.windowEnd) {
@@ -219,7 +222,7 @@ Return only valid JSON, nothing else.`;
         });
       }
       if (action.kind === "spray" && action.crop) {
-        const preHarvestDays = action.preHarvestDays ?? 7;
+        const preHarvestDays = (_a = action.preHarvestDays) != null ? _a : 7;
         const harvestActions = plan.actions.filter(
           (a) => a.kind === "harvest" && a.crop === action.crop
         );
@@ -340,24 +343,25 @@ PRODID:-//Shamba Steward//EN\r
     }
   });
   function showStep(step) {
+    var _a, _b, _c, _d;
     [parseOutput, planOutput, verifyOutput, deliverOutput].forEach((el) => el.classList.add("hidden"));
     document.querySelectorAll(".step-indicator").forEach((el) => el.classList.remove("active"));
     switch (step) {
       case "parse":
         parseOutput.classList.remove("hidden");
-        document.getElementById("step-parse")?.classList.add("active");
+        (_a = document.getElementById("step-parse")) == null ? void 0 : _a.classList.add("active");
         break;
       case "plan":
         planOutput.classList.remove("hidden");
-        document.getElementById("step-plan")?.classList.add("active");
+        (_b = document.getElementById("step-plan")) == null ? void 0 : _b.classList.add("active");
         break;
       case "verify":
         verifyOutput.classList.remove("hidden");
-        document.getElementById("step-verify")?.classList.add("active");
+        (_c = document.getElementById("step-verify")) == null ? void 0 : _c.classList.add("active");
         break;
       case "deliver":
         deliverOutput.classList.remove("hidden");
-        document.getElementById("step-deliver")?.classList.add("active");
+        (_d = document.getElementById("step-deliver")) == null ? void 0 : _d.classList.add("active");
         break;
     }
   }
@@ -458,6 +462,9 @@ PRODID:-//Shamba Steward//EN\r
       showStep("parse");
     }
   }
-  runButton.addEventListener("click", runAgent);
+  runButton.addEventListener("click", () => runAgent(false));
+  var demoButton = document.getElementById("demo-button");
+  demoButton.addEventListener("click", () => runAgent(true));
   textField.value = "North plot maize is tasseling. Aphids on the beans in the east plot. Rain expected Thursday. Need to sell 3 bags of maize.";
+  window.runAgent = runAgent;
 })();
